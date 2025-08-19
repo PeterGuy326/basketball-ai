@@ -1,0 +1,96 @@
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
+
+[tool.poetry]
+name = "basketball-ai-referee"
+version = "0.1.0"
+description = "篮球AI裁判系统 - 微服务架构"
+authors = ["Basketball AI Team <team@basketball-ai.com>"]
+readme = "readme.md"
+packages = [{include = "shared"}]
+
+[tool.poetry.dependencies]
+python = ">=3.9,<3.9.7 || >3.9.7,<4.0"
+
+# Basic utilities (always needed)
+structlog = "^23.1.0"
+pytest = "^7.4.0"
+pytest-asyncio = "^0.21.0"
+pytest-cov = "^4.1.0"
+
+[tool.poetry.group.dev.dependencies]
+black = "^23.7.0"
+isort = "^5.12.0"
+flake8 = "^6.0.0"
+mypy = "^1.5.0"
+pre-commit = "^3.3.0"
+
+[tool.poetry.group.edge.dependencies]
+# AI/ML Framework
+torch = "^2.0.0"
+torchvision = "^0.15.0"
+opencv-python = "^4.8.0"
+mediapipe = "^0.10.0"
+ultralytics = "^8.0.0"  # YOLOv8
+numpy = "^1.24.0"
+scipy = "^1.10.0"
+scikit-learn = "^1.3.0"
+
+# Computer Vision & Video Processing
+pillow = "^10.0.0"
+imageio = "^2.31.0"
+
+# Data Processing & Storage
+pandas = "^2.0.0"
+psycopg2-binary = "^2.9.0"
+sqlalchemy = "^2.0.0"
+redis = "^4.6.0"
+
+# Message Queue & Communication
+kafka-python = "^2.0.2"
+fastapi = "^0.100.0"
+uvicorn = "^0.23.0"
+websockets = "^11.0"
+grpcio = "^1.57.0"
+grpcio-tools = "^1.57.0"
+
+# Monitoring & Logging
+prometheus-client = "^0.17.0"
+
+# Edge computing dependencies
+tensorrt = {version = "^8.6.0", optional = true}
+onnxruntime = "^1.15.0"
+onnx = "^1.14.0"
+
+[tool.poetry.group.ui.dependencies]
+# UI dependencies
+streamlit = "^1.25.0"
+plotly = "^5.15.0"
+matplotlib = "^3.7.0"
+seaborn = "^0.12.0"
+
+[tool.poetry.extras]
+edge = ["tensorrt"]
+ui = ["streamlit", "plotly", "matplotlib", "seaborn"]
+
+[tool.black]
+line-length = 88
+target-version = ['py39']
+
+[tool.isort]
+profile = "black"
+multi_line_output = 3
+
+[tool.mypy]
+python_version = "3.9"
+warn_return_any = true
+warn_unused_configs = true
+disallow_untyped_defs = true
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = ["test_*.py"]
+python_classes = ["Test*"]
+python_functions = ["test_*"]
+addopts = "--cov=shared --cov-report=html --cov-report=term-missing"

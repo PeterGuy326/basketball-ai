@@ -1,0 +1,58 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: rule-validator
+  labels:
+    app: rule-validator
+    component: edge-computing
+    tier: rules
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: rule-validator
+  template:
+    metadata:
+      labels:
+        app: rule-validator
+        component: edge-computing
+        tier: rules
+    spec:
+      containers:
+      - name: rule-validator
+        image: local/rule-validator:latest
+        imagePullPolicy: IfNotPresent
+        env:
+        - name: KAFKA_BROKERS
+          value: kafka:9092
+        - name: RULE_TOPIC
+          value: rule.events
+        - name: DETECTION_TOPIC
+          value: detection.events
+        resources:
+          requests:
+            memory: "256Mi"
+            cpu: "250m"
+          limits:
+            memory: "1Gi"
+            cpu: "1000m"
+        livenessProbe:
+          exec:
+            command:
+            - /bin/sh
+            - -c
+            - "ps aux | grep -v grep | grep -q 'python main.py'"
+          initialDelaySeconds: 30
+          periodSeconds: 30
+          timeoutSeconds: 5
+          failureThreshold: 3
+        readinessProbe:
+          exec:
+            command:
+            - /bin/sh
+            - -c
+            - "ps aux | grep -v grep | grep -q 'python main.py'"
+          initialDelaySeconds: 10
+          periodSeconds: 10
+          timeoutSeconds: 3
+          failureThreshold: 3

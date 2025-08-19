@@ -1,0 +1,142 @@
+version: '3.9'
+services:
+  zookeeper:
+    image: confluentinc/cp-zookeeper:7.5.0
+    environment:
+      ZOOKEEPER_CLIENT_PORT: 2181
+      ZOOKEEPER_TICK_TIME: 2000
+    ports:
+      - "2181:2181"
+
+  kafka:
+    image: confluentinc/cp-kafka:7.5.0
+    depends_on:
+      - zookeeper
+    ports:
+      - "9092:9092"
+    environment:
+      KAFKA_BROKER_ID: 1
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092,PLAINTEXT_HOST://localhost:9093
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT
+      KAFKA_LISTENERS: PLAINTEXT://0.0.0.0:9092,PLAINTEXT_HOST://0.0.0.0:9093
+      KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+
+  timescaledb:
+    image: timescale/timescaledb:latest-pg14
+    environment:
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_USER: postgres
+      POSTGRES_DB: basketball_ai
+    ports:
+      - "5433:5432"
+    volumes:
+      - timescale_data:/var/lib/postgresql/data
+      - ../../infrastructure/timescale-db/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
+
+  # ========== Data Sensing Layer ==========
+  vision-sensor-edge:
+    build:
+      context: ../..
+      dockerfile: services/data-sensing-layer/vision-sensor-edge/Dockerfile
+    command: ["python", "main.py"]
+    environment:
+      KAFKA_BROKERS: kafka:9092
+      PYTHONPATH: /workspace
+    depends_on:
+      - kafka
+    restart: always
+
+  data-preprocessor:
+    build:
+      context: ../..
+      dockerfile: services/data-sensing-layer/data-preprocessor/Dockerfile
+    command: ["python", "main.py"]
+    environment:
+      KAFKA_BROKERS: kafka:9092
+      PYTHONPATH: /workspace
+    depends_on:
+      - kafka
+    restart: always
+
+  # ========== Edge Computing Layer ==========
+  inference-engine-edge:
+    build:
+      context: ../..
+      dockerfile: services/edge-computing-layer/inference-engine-edge/Dockerfile
+    command: ["python", "main.py"]
+    environment:
+      KAFKA_BROKERS: kafka:9092
+      DATABASE_URL: "postgresql://postgres:postgres@timescaledb:5432/basketball_ai"
+      PYTHONPATH: /workspace
+    depends_on:
+      - kafka
+      - timescaledb
+    restart: always
+
+  rule-validator:
+    build:
+      context: ../..
+      dockerfile: services/edge-computing-layer/rule-validator/Dockerfile
+    command: ["python", "main.py"]
+    environment:
+      KAFKA_BROKERS: kafka:9092
+      DATABASE_URL: "postgresql://postgres:postgres@timescaledb:5432/basketball_ai"
+      PYTHONPATH: /workspace
+    depends_on:
+      - kafka
+      - timescaledb
+    restart: always
+
+  # ========== AI Agent Layer ==========
+  travel-detector-svc:
+    build:
+      context: ../..
+      dockerfile: services/ai-agent-layer/referee-agents/travel-detector-svc/Dockerfile
+    command: ["uvicorn", "app:app", "--host", "0.0.0.0", "--port", "8001"]
+    environment:
+      KAFKA_BROKERS: kafka:9092
+      PYTHONPATH: /workspace
+    depends_on:
+      - kafka
+    restart: always
+
+  stat-aggregator-sql:
+    build:
+      context: ../..
+      dockerfile: services/ai-agent-layer/data-agents/stat-aggregator-sql/Dockerfile
+    command: ["uvicorn", "app:app", "--host", "0.0.0.0", "--port", "8010"]
+    ports:
+      - "8010:8010"
+    environment:
+      DATABASE_URL: "postgresql://postgres:postgres@timescaledb:5432/basketball_ai"
+      KAFKA_BROKERS: kafka:9092
+      PYTHONPATH: /workspace
+    depends_on:
+      - kafka
+      - timescaledb
+
+  # ========== UI Layer ==========
+  referee-ui:
+    build:
+      context: ../..
+      dockerfile: services/user-interaction-layer/referee-ui/Dockerfile
+    command: ["streamlit", "run", "app.py", "--server.port", "8501", "--server.address", "0.0.0.0"]
+    ports:
+      - "8501:8501"
+    depends_on:
+      - travel-detector-svc
+
+  coach-dashboard:
+    build:
+      context: ../..
+      dockerfile: services/user-interaction-layer/coach-dashboard/Dockerfile
+    command: ["streamlit", "run", "app.py", "--server.port", "8502", "--server.address", "0.0.0.0"]
+    ports:
+      - "8502:8502"
+    depends_on:
+      - kafka
+
+volumes:
+  timescale_data:

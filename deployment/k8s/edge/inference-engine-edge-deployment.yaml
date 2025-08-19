@@ -1,0 +1,58 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: inference-engine-edge
+  labels:
+    app: inference-engine-edge
+    component: edge-computing
+    tier: inference
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: inference-engine-edge
+  template:
+    metadata:
+      labels:
+        app: inference-engine-edge
+        component: edge-computing
+        tier: inference
+    spec:
+      containers:
+      - name: inference-engine-edge
+        image: local/inference-engine-edge:latest
+        imagePullPolicy: IfNotPresent
+        env:
+        - name: KAFKA_BROKERS
+          value: kafka:9092
+        - name: DETECTION_TOPIC
+          value: detection.events
+        - name: VIDEO_TOPIC
+          value: video.frames
+        resources:
+          requests:
+            memory: "512Mi"
+            cpu: "500m"
+          limits:
+            memory: "2Gi"
+            cpu: "2000m"
+        livenessProbe:
+          exec:
+            command:
+            - /bin/sh
+            - -c
+            - "ps aux | grep -v grep | grep -q 'python main.py'"
+          initialDelaySeconds: 30
+          periodSeconds: 30
+          timeoutSeconds: 5
+          failureThreshold: 3
+        readinessProbe:
+          exec:
+            command:
+            - /bin/sh
+            - -c
+            - "ps aux | grep -v grep | grep -q 'python main.py'"
+          initialDelaySeconds: 10
+          periodSeconds: 10
+          timeoutSeconds: 3
+          failureThreshold: 3
