@@ -1,24 +1,12 @@
-FROM python:3.9
+FROM python:3.9-slim
 
-WORKDIR /app
-
-# Install system dependencies for OpenCV and video processing
-RUN apt-get update && apt-get install -y \
-    build-essential \
-    ffmpeg \
-    libsm6 \
-    libxext6 \
-    libglib2.0-0 \
-    v4l-utils \
-    && rm -rf /var/lib/apt/lists/*
-
-COPY . /workspace
+# 使用精简版基础镜像，仅安装必要运行时
 WORKDIR /workspace
 
-# Install only necessary vision dependencies directly
+COPY . /workspace
+
+# 安装最小依赖：Kafka 客户端与日志库
 RUN pip install --no-cache-dir \
-    opencv-python==4.8.1.78 \
-    numpy==1.24.4 \
     kafka-python==2.0.2 \
     structlog==23.3.0
 

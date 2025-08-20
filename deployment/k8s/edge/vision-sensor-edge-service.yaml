@@ -1,0 +1,14 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: vision-sensor-edge
+  labels:
+    app: vision-sensor-edge
+spec:
+  type: ClusterIP
+  selector:
+    app: vision-sensor-edge
+  ports:
+  - name: http
+    port: 8005
+    targetPort: 8005

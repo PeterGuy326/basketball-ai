@@ -1,0 +1,70 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: vision-sensor-edge
+  labels:
+    app: vision-sensor-edge
+    component: data-sensing
+    tier: ingest
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: vision-sensor-edge
+  template:
+    metadata:
+      labels:
+        app: vision-sensor-edge
+        component: data-sensing
+        tier: ingest
+    spec:
+      containers:
+      - name: vision-sensor-edge
+        image: local/vision-sensor-edge:latest
+        imagePullPolicy: IfNotPresent
+        env:
+        - name: KAFKA_BROKERS
+          value: kafka:9092
+        - name: VISION_INPUT_MODE
+          value: http_receiver
+        - name: VISION_HTTP_PORT
+          value: "8005"
+        - name: VIDEO_TOPIC
+          value: video.frames
+        - name: PYTHONPATH
+          value: /workspace
+        - name: INGEST_AUTH_TOKEN
+          valueFrom:
+            secretKeyRef:
+              name: vision-sensor-edge-secret
+              key: INGEST_AUTH_TOKEN
+        ports:
+        - containerPort: 8005
+          name: http
+        resources:
+          requests:
+            cpu: "200m"
+            memory: "256Mi"
+          limits:
+            cpu: "1000m"
+            memory: "1Gi"
+        livenessProbe:
+          exec:
+            command:
+            - /bin/sh
+            - -c
+            - "ps aux | grep -v grep | grep -q 'python main.py'"
+          initialDelaySeconds: 20
+          periodSeconds: 30
+          timeoutSeconds: 5
+          failureThreshold: 3
+        readinessProbe:
+          exec:
+            command:
+            - /bin/sh
+            - -c
+            - "ps aux | grep -v grep | grep -q 'python main.py'"
+          initialDelaySeconds: 10
+          periodSeconds: 10
+          timeoutSeconds: 3
+          failureThreshold: 3
