@@ -142,26 +142,57 @@ class VisionSensorEdge:
                         parent._rl_second = now_s
                         parent._rl_count = 1
 
-                    # 解析 JSON
-                    try:
-                        data = json.loads(body_bytes.decode("utf-8"))
-                    except Exception:
-                        self.send_response(400)
-                        self.end_headers()
-                        self.wfile.write(b"invalid json")
-                        return
+                    # 根据 Content-Type 解析：支持 application/json 或 image/* 二进制
+                    ct = (self.headers.get("Content-Type", "").lower() or "")
+                    frame_b64 = None
+                    ts_val = None
 
-                    frame_b64 = data.get("frame")
-                    ts_val = float(data.get("timestamp", time.time()))
-                    if not frame_b64:
-                        self.send_response(400)
-                        self.end_headers()
-                        self.wfile.write(b"missing frame")
-                        return
+                    if "application/json" in ct:
+                        try:
+                            data = json.loads(body_bytes.decode("utf-8"))
+                        except Exception:
+                            self.send_response(400)
+                            self.end_headers()
+                            self.wfile.write(b"invalid json")
+                            return
+                        frame_b64 = data.get("frame")
+                        try:
+                            ts_val = float(data.get("timestamp", time.time()))
+                        except Exception:
+                            ts_val = time.time()
+                        if not frame_b64:
+                            self.send_response(400)
+                            self.end_headers()
+                            self.wfile.write(b"missing frame")
+                            return
+                    elif "image/" in ct:
+                        # 原始 JPEG/PNG 等图像二进制，编码为 Base64 后转发
+                        frame_b64 = base64.b64encode(body_bytes).decode("ascii")
+                        ts_hdr = self.headers.get("X-Timestamp")
+                        try:
+                            ts_val = float(ts_hdr) if ts_hdr else time.time()
+                        except Exception:
+                            ts_val = time.time()
+                    else:
+                        # 兜底：尝试按 JSON 解析，否则按二进制处理
+                        try:
+                            data = json.loads(body_bytes.decode("utf-8"))
+                            frame_b64 = data.get("frame")
+                            try:
+                                ts_val = float(data.get("timestamp", time.time()))
+                            except Exception:
+                                ts_val = time.time()
+                            if not frame_b64:
+                                self.send_response(400)
+                                self.end_headers()
+                                self.wfile.write(b"missing frame")
+                                return
+                        except Exception:
+                            frame_b64 = base64.b64encode(body_bytes).decode("ascii")
+                            ts_val = time.time()
 
                     # 可选：快速校验 Base64（失败直接 400）。
                     try:
-                        # 仅校验格式，不保留解码结果，避免额外内存。
                         base64.b64decode(frame_b64, validate=True)
                     except Exception:
                         self.send_response(400)

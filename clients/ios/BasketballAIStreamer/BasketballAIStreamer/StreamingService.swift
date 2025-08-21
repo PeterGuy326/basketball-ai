@@ -9,7 +9,7 @@ final class StreamingService: NSObject, ObservableObject {
     private var useHMAC: Bool = true
 
     private var isRunning = false
-    private var frameInterval: TimeInterval = 0.2 // 5 FPS
+    private var frameInterval: TimeInterval = 0.2 // 5 FPS，稳定带宽
     private var lastSent: TimeInterval = 0
 
     func configure(endpoint: String, secret: String, useHMAC: Bool) {
@@ -31,7 +31,8 @@ final class StreamingService: NSObject, ObservableObject {
     }
 
     @objc private func onFrame(_ note: Notification) {
-        guard isRunning, let sampleBuffer = note.object as? CMSampleBuffer else { return }
+        guard isRunning, let obj = note.object else { return }
+        let sampleBuffer = obj as! CMSampleBuffer
         let now = CACurrentMediaTime()
         if now - lastSent < frameInterval { return }
         lastSent = now
@@ -40,12 +41,21 @@ final class StreamingService: NSObject, ObservableObject {
         CVPixelBufferLockBaseAddress(imageBuffer, .readOnly)
         defer { CVPixelBufferUnlockBaseAddress(imageBuffer, .readOnly) }
 
-        // 转 JPEG
+        // 1) 裁剪为竖屏 9:16 比例
         let ciImage = CIImage(cvPixelBuffer: imageBuffer)
+        let targetAspect: CGFloat = 9.0 / 16.0
+        let filled = aspectFill(image: ciImage, targetAspect: targetAspect)
+
+        // 2) 缩放到 1080x1920，兼顾清晰度与带宽（Lanczos 缩放）
+        let targetWidth: CGFloat = 1080
+        let targetHeight: CGFloat = 1920
+        let scaled = resizeLanczos(image: filled, targetWidth: targetWidth, targetHeight: targetHeight)
+
+        // 3) 转 JPEG（提高质量到 0.7）
         let context = CIContext()
-        guard let cg = context.createCGImage(ciImage, from: ciImage.extent) else { return }
+        guard let cg = context.createCGImage(scaled, from: scaled.extent) else { return }
         let ui = UIImage(cgImage: cg)
-        guard let jpg = ui.jpegData(compressionQuality: 0.6) else { return }
+        guard let jpg = ui.jpegData(compressionQuality: 0.7) else { return }
         let b64 = jpg.base64EncodedString()
 
         let ts = Int(Date().timeIntervalSince1970)
@@ -79,5 +89,41 @@ final class StreamingService: NSObject, ObservableObject {
                 }
             }
         }.resume()
+    }
+
+    // 等比裁剪为目标纵横比（以中心为基准），返回裁剪后的 CIImage
+    private func aspectFill(image: CIImage, targetAspect: CGFloat) -> CIImage {
+        let extent = image.extent
+        let w = extent.width
+        let h = extent.height
+        let srcAspect = w / h
+
+        var crop = extent
+        if srcAspect > targetAspect {
+            // 源更宽，裁掉左右
+            let newW = h * targetAspect
+            let x = extent.origin.x + (w - newW) / 2.0
+            crop = CGRect(x: x, y: extent.origin.y, width: newW, height: h)
+        } else if srcAspect < targetAspect {
+            // 源更高，裁掉上下
+            let newH = w / targetAspect
+            let y = extent.origin.y + (h - newH) / 2.0
+            crop = CGRect(x: extent.origin.x, y: y, width: w, height: newH)
+        }
+        return image.cropped(to: crop)
+    }
+
+    // 使用 Lanczos 缩放到指定尺寸（已与目标比例匹配）
+    private func resizeLanczos(image: CIImage, targetWidth: CGFloat, targetHeight: CGFloat) -> CIImage {
+        let extent = image.extent
+        let sx = targetWidth / extent.width
+        let sy = targetHeight / extent.height
+        // 比例已匹配，sx≈sy，选用 sx
+        let scale = sx
+        guard let filter = CIFilter(name: "CILanczosScaleTransform") else { return image }
+        filter.setValue(image, forKey: kCIInputImageKey)
+        filter.setValue(scale, forKey: kCIInputScaleKey)
+        filter.setValue(1.0, forKey: kCIInputAspectRatioKey)
+        return filter.outputImage ?? image.transformed(by: CGAffineTransform(scaleX: scale, y: scale))
     }
 }

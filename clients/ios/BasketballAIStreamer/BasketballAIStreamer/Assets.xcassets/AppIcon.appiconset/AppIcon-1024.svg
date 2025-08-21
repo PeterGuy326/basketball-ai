@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1024" height="1024" viewBox="0 0 1024 1024">
+  <rect width="1024" height="1024" fill="#0b5fff"/>
+  <circle cx="512" cy="512" r="320" fill="#ffffff"/>
+  <text x="512" y="560" font-size="180" text-anchor="middle" fill="#0b5fff" font-family="-apple-system,Helvetica,Arial,sans-serif">BAI</text>
+</svg>
