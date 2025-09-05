@@ -1,15 +1,16 @@
-FROM python:3.9-slim
+FROM openjdk:11-jre-slim
 
 # 使用精简版基础镜像，仅安装必要运行时
 WORKDIR /workspace
 
-COPY . /workspace
+# 复制Maven构建的应用程序
+COPY target/vision-sensor-edge-1.0.0.jar app.jar
 
-# 安装最小依赖：Kafka 客户端与日志库
-RUN pip install --no-cache-dir \
-    kafka-python==2.0.2 \
-    structlog==23.3.0
+# 设置JVM参数并启动应用
+ENV JAVA_OPTS="-Xmx512m -Xms256m"
 
-WORKDIR /workspace/services/data-sensing-layer/vision-sensor-edge
+EXPOSE 8080
 
-CMD ["python", "main.py"]
+WORKDIR /workspace
+
+CMD ["java", "-jar", "app.jar"]

@@ -1,0 +1,30 @@
+server:
+  port: 8080
+  address: 0.0.0.0
+
+vision:
+  sensor:
+    input-mode: http_receiver
+    http-port: "8080"
+    ingest-auth-token: ""
+    ingest-rps-limit: 100
+    kafka:
+      brokers: localhost:9092
+      video-topic: video.data
+    service:
+      host: 0.0.0.0
+
+spring:
+  kafka:
+    bootstrap-servers: localhost:9092
+    producer:
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.apache.kafka.common.serialization.StringSerializer
+      acks: 1
+      retries: 3
+
+logging:
+  level:
+    com.basketballai.visionsensoredge: INFO
+  pattern:
+    console: "%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n"

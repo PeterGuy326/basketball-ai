@@ -87,3 +87,15 @@ iOSInjectionProject/
 
 # General
 .DS_Store
+
+# Local Configuration Files
+# These contain sensitive information like IP addresses and tokens
+config.json
+config.local.json
+**/config.json
+**/config.local.json
+
+# Environment-specific configurations
+.env
+.env.local
+.env.*.local

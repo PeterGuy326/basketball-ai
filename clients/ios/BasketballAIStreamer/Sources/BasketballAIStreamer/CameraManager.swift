@@ -17,7 +17,12 @@ class CameraManager: NSObject, ObservableObject {
     private var videoDeviceInput: AVCaptureDeviceInput?
     private var audioDeviceInput: AVCaptureDeviceInput?
     private var movieFileOutput: AVCaptureMovieFileOutput?
+    private var videoDataOutput: AVCaptureVideoDataOutput?
     private var previewLayer: AVCaptureVideoPreviewLayer?
+    
+    // MARK: - Video Stream Service
+    @Published var videoStreamService = VideoStreamService()
+    private let videoQueue = DispatchQueue(label: "video.queue", qos: .userInteractive)
     
     // MARK: - Configuration
     var streamURL: String = ""
@@ -117,6 +122,9 @@ class CameraManager: NSObject, ObservableObject {
         // 添加录制输出
         setupOutputs()
         
+        // 添加视频数据输出用于流传输
+        setupVideoDataOutput()
+        
         session.commitConfiguration()
         print("会话配置完成")
         
@@ -201,6 +209,31 @@ class CameraManager: NSObject, ObservableObject {
             
             // 初始设置视频连接的方向
             updateVideoOrientation()
+        }
+    }
+    
+    private func setupVideoDataOutput() {
+        guard let session = captureSession else { return }
+        
+        videoDataOutput = AVCaptureVideoDataOutput()
+        guard let videoOutput = videoDataOutput else { return }
+        
+        // 设置像素格式为YUV420，便于处理
+        videoOutput.videoSettings = [
+            kCVPixelBufferPixelFormatTypeKey as String: Int(kCVPixelFormatType_420YpCbCr8BiPlanarFullRange)
+        ]
+        
+        // 设置输出代理
+        videoOutput.setSampleBufferDelegate(self, queue: videoQueue)
+        
+        // 丢弃延迟的帧以保持实时性
+        videoOutput.alwaysDiscardsLateVideoFrames = true
+        
+        if session.canAddOutput(videoOutput) {
+            session.addOutput(videoOutput)
+            print("视频数据输出添加成功")
+        } else {
+            print("无法添加视频数据输出")
         }
     }
     
@@ -317,16 +350,38 @@ class CameraManager: NSObject, ObservableObject {
         streamURL = url
         streamKey = key
         
-        DispatchQueue.main.async {
-            self.isStreaming = true
-            self.streamingStatus = "推流中"
+        // 如果url看起来像HTTP URL，则使用VideoStreamService
+        if url.lowercased().hasPrefix("http://") || url.lowercased().hasPrefix("https://") {
+            videoStreamService.updateServerURL(url)
+            if !key.isEmpty {
+                videoStreamService.updateAuthToken(key)
+            }
+            
+            Task {
+                await videoStreamService.testConnection()
+                await MainActor.run {
+                    if videoStreamService.isConnected {
+                        self.isStreaming = true
+                        self.streamingStatus = "HTTP推流中"
+                    } else {
+                        self.streamingStatus = "连接失败"
+                    }
+                }
+            }
+        } else {
+            // RTMP推流逻辑
+            DispatchQueue.main.async {
+                self.isStreaming = true
+                self.streamingStatus = "RTMP推流中"
+            }
         }
     }
     
     func stopStreaming() {
+        videoStreamService.disconnect()
         DispatchQueue.main.async {
             self.isStreaming = false
-            self.streamingStatus = "未连接"
+            self.streamingStatus = "已停止"
         }
     }
     
@@ -378,5 +433,25 @@ extension CameraManager: AVCaptureFileOutputRecordingDelegate {
         } else {
             print("录制完成: \(outputFileURL.path)")
         }
+    }
+}
+
+// MARK: - AVCaptureVideoDataOutputSampleBufferDelegate
+extension CameraManager: AVCaptureVideoDataOutputSampleBufferDelegate {
+    func captureOutput(_ output: AVCaptureOutput, 
+                      didOutput sampleBuffer: CMSampleBuffer, 
+                      from connection: AVCaptureConnection) {
+        
+        // 只在HTTP流式传输时处理视频帧
+        guard isStreaming && videoStreamService.isConnected else { return }
+        
+        guard let pixelBuffer = CMSampleBufferGetImageBuffer(sampleBuffer) else {
+            return
+        }
+        
+        let timestamp = Date().timeIntervalSince1970
+        
+        // 发送到VideoStreamService（已经在后台队列中）
+        videoStreamService.sendVideoFrame(pixelBuffer, timestamp: timestamp)
     }
 }

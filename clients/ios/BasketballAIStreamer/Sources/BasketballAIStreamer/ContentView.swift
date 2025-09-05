@@ -4,9 +4,12 @@ import AVFoundation
 struct ContentView: View {
     @StateObject private var cameraManager = CameraManager()
     @State private var showStreamingSettings = false
-    @State private var streamURL = "rtmp://your-server.com/live"
-    @State private var streamKey = "your-stream-key"
+    @State private var streamURL = ""
+    @State private var streamKey = ""
     @State private var cameraPreviewKey = UUID()
+    @State private var showConnectionDetails = false
+    
+    private let config = AppConfig.shared
     
     var body: some View {
         GeometryReader { geometry in
@@ -23,9 +26,11 @@ struct ContentView: View {
                         // 推流状态指示器
                         HStack(spacing: 8) {
                             Circle()
-                                .fill(cameraManager.isStreaming ? Color.red : Color.gray)
+                                .fill(cameraManager.videoStreamService.isConnected ? 
+                                      (cameraManager.isStreaming ? Color.green : Color.orange) : 
+                                      Color.red)
                                 .frame(width: 8, height: 8)
-                            Text(cameraManager.streamingStatus)
+                            Text(cameraManager.videoStreamService.connectionStatus)
                                 .font(.caption)
                                 .foregroundColor(.white)
                         }
@@ -33,6 +38,9 @@ struct ContentView: View {
                         .padding(.vertical, 6)
                         .background(Color.black.opacity(0.6))
                         .cornerRadius(15)
+                        .onTapGesture {
+                            showConnectionDetails.toggle()
+                        }
                         
                         Spacer()
                         
@@ -136,6 +144,11 @@ struct ContentView: View {
         .preferredColorScheme(.dark)
         .onAppear {
             print("ContentView appeared, 开始初始化相机")
+            
+            // 从配置文件初始化URL设置
+            streamURL = config.server.fullURL
+            streamKey = config.server.authToken
+            
             // 启用设备方向变化监听
             UIDevice.current.beginGeneratingDeviceOrientationNotifications()
             Task {
@@ -151,6 +164,12 @@ struct ContentView: View {
                 streamURL: $streamURL,
                 streamKey: $streamKey,
                 isPresented: $showStreamingSettings
+            )
+        }
+        .sheet(isPresented: $showConnectionDetails) {
+            ConnectionDetailsView(
+                videoStreamService: cameraManager.videoStreamService,
+                isPresented: $showConnectionDetails
             )
         }
     }
@@ -331,35 +350,151 @@ struct StreamingSettingsView: View {
     var body: some View {
         NavigationView {
             Form {
-                Section(header: Text("推流设置")) {
+                Section(header: Text("服务器设置")) {
                     VStack(alignment: .leading, spacing: 8) {
-                        Text("RTMP服务器地址")
+                        Text("服务器地址")
                             .font(.caption)
                             .foregroundColor(.secondary)
-                        TextField("rtmp://your-server.com/live", text: $streamURL)
+                        TextField(config.server.fullURL, text: $streamURL)
                             .textFieldStyle(RoundedBorderTextFieldStyle())
+                            .autocapitalization(.none)
+                            .keyboardType(.URL)
                     }
                     
                     VStack(alignment: .leading, spacing: 8) {
-                        Text("推流密钥")
+                        Text("认证令牌 (可选)")
                             .font(.caption)
                             .foregroundColor(.secondary)
-                        TextField("your-stream-key", text: $streamKey)
+                        TextField("authentication token", text: $streamKey)
                             .textFieldStyle(RoundedBorderTextFieldStyle())
                     }
                 }
                 
-                Section(header: Text("说明")) {
-                    Text("请输入您的RTMP服务器地址和推流密钥。确保服务器支持H.264视频编码和AAC音频编码。")
-                        .font(.caption)
-                        .foregroundColor(.secondary)
+                Section(header: Text("服务类型说明")) {
+                    VStack(alignment: .leading, spacing: 12) {
+                        HStack {
+                            Image(systemName: "globe")
+                                .foregroundColor(.blue)
+                                .frame(width: 20)
+                            VStack(alignment: .leading) {
+                                Text("HTTP 服务")
+                                    .font(.headline)
+                                Text("如: http://server:8080/ingest")
+                                    .font(.caption)
+                                    .foregroundColor(.secondary)
+                            }
+                        }
+                        
+                        HStack {
+                            Image(systemName: "video")
+                                .foregroundColor(.red)
+                                .frame(width: 20)
+                            VStack(alignment: .leading) {
+                                Text("RTMP 推流")
+                                    .font(.headline)
+                                Text("如: rtmp://server/live")
+                                    .font(.caption)
+                                    .foregroundColor(.secondary)
+                            }
+                        }
+                    }
                 }
             }
-            .navigationTitle("推流设置")
+            .navigationTitle("服务器设置")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .navigationBarTrailing) {
                     Button("完成") {
+                        isPresented = false
+                    }
+                }
+            }
+        }
+    }
+}
+
+// MARK: - Connection Details View
+struct ConnectionDetailsView: View {
+    @ObservedObject var videoStreamService: VideoStreamService
+    @Binding var isPresented: Bool
+    
+    var body: some View {
+        NavigationView {
+            Form {
+                Section(header: Text("连接状态")) {
+                    HStack {
+                        Text("服务器地址")
+                        Spacer()
+                        Text(videoStreamService.serverURL)
+                            .font(.caption)
+                            .foregroundColor(.secondary)
+                    }
+                    
+                    HStack {
+                        Text("连接状态")
+                        Spacer()
+                        HStack {
+                            Circle()
+                                .fill(videoStreamService.isConnected ? Color.green : Color.red)
+                                .frame(width: 8, height: 8)
+                            Text(videoStreamService.isConnected ? "已连接" : "未连接")
+                                .font(.caption)
+                        }
+                    }
+                    
+                    HStack {
+                        Text("状态信息")
+                        Spacer()
+                        Text(videoStreamService.connectionStatus)
+                            .font(.caption)
+                            .foregroundColor(.secondary)
+                    }
+                }
+                
+                Section(header: Text("传输统计")) {
+                    HStack {
+                        Text("已发送帧数")
+                        Spacer()
+                        Text("\(videoStreamService.framesSent)")
+                            .font(.title2)
+                            .fontWeight(.semibold)
+                    }
+                    
+                    if let error = videoStreamService.lastError {
+                        VStack(alignment: .leading, spacing: 4) {
+                            Text("最近错误")
+                                .font(.caption)
+                                .foregroundColor(.secondary)
+                            Text(error)
+                                .font(.caption)
+                                .foregroundColor(.red)
+                        }
+                    }
+                }
+                
+                Section {
+                    HStack {
+                        Spacer()
+                        Button("测试连接") {
+                            Task {
+                                await videoStreamService.testConnection()
+                            }
+                        }
+                        .buttonStyle(.borderedProminent)
+                        
+                        Button("重置统计") {
+                            videoStreamService.resetStats()
+                        }
+                        .buttonStyle(.bordered)
+                        Spacer()
+                    }
+                }
+            }
+            .navigationTitle("连接详情")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .navigationBarTrailing) {
+                    Button("关闭") {
                         isPresented = false
                     }
                 }

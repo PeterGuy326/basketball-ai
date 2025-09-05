@@ -1,0 +1,20 @@
+{
+  "_comment": "iOS应用配置文件模板 - 复制为config.json并修改相应值",
+  "server": {
+    "baseURL": "http://YOUR_IP_ADDRESS:8080",
+    "endpoint": "/ingest",
+    "authToken": "",
+    "timeout": 5.0
+  },
+  "video": {
+    "compressionQuality": 0.6,
+    "maxResolution": {
+      "width": 640,
+      "height": 480
+    }
+  },
+  "debug": {
+    "enableLogging": true,
+    "logNetworkRequests": true
+  }
+}
