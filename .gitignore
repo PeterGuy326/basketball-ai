@@ -1,0 +1,646 @@
+# Basketball AI Project .gitignore
+
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+._*
+
+# Windows
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+$RECYCLE.BIN/
+
+# Linux
+*~
+.fuse_hidden*
+.directory
+
+# IDEs and Editors
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# General build and temp files
+*.log
+*.tmp
+*.temp
+.DS_Store
+Thumbs.db
+build/
+dist/
+*.pyc
+__pycache__/
+*.pyo
+*.pyd
+.Python
+*.so
+.coverage
+.coverage.*
+.cache
+nosetests.xml
+coverage.xml
+*.cover
+*.gem
+*.rbc
+*.sassc
+.sass-cache
+*.scssc
+.cache/
+
+# Virtual Environment
+.env
+.venv
+env/
+venv/
+ENV/
+
+# Poetry
+poetry.lock
+
+# Docker
+docker-compose.override.yml
+.dockerignore
+
+# Kubernetes
+*.kubeconfig
+
+# Xcode
+# User-specific Xcode files
+*.xcuserdatad/
+*.xcworkspace/xcuserdata/
+*.xcodeproj/xcuserdata/
+UserInterfaceState.xcuserstate
+xcschememanagement.plist
+
+# Swift Package Manager
+.swiftpm/
+.build/
+Package.resolved
+
+# Xcode build artifacts
+build/
+*.ipa
+*.dSYM.zip
+*.dSYM
+
+# Carthage
+Carthage/Build/
+
+# Fastlane
+fastlane/report.xml
+fastlane/Preview.html
+fastlane/screenshots/**/*.png
+fastlane/test_output
+
+# Python
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# C extensions
+*.so
+
+# Distribution / packaging
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+
+# PyInstaller
+#  Usually these files are written by a python script from a template
+#  before PyInstaller builds the exe, so as to inject date/other infos into it.
+*.manifest
+*.spec
+
+# Installer logs
+pip-log.txt
+pip-delete-this-directory.txt
+
+# Unit test / coverage reports
+htmlcov/
+.tox/
+.nox/
+.coverage
+.coverage.*
+.cache
+nosetests.xml
+coverage.xml
+*.cover
+*.py,cover
+.hypothesis/
+.pytest_cache/
+
+# Translations
+*.mo
+*.pot
+
+# Django stuff:
+*.log
+local_settings.py
+db.sqlite3
+db.sqlite3-journal
+
+# Flask stuff:
+instance/
+.webassets-cache
+
+# Scrapy stuff:
+.scrapy
+
+# Sphinx documentation
+docs/_build/
+
+# PyBuilder
+target/
+
+# Jupyter Notebook
+.ipynb_checkpoints
+
+# IPython
+profile_default/
+ipython_config.py
+
+# pyenv
+.python-version
+
+# pipenv
+#   According to pypa/pipenv#598, it is recommended to include Pipfile.lock in version control.
+#   However, in case of collaboration, if having platform-specific dependencies or dependencies
+#   having no cross-platform support, pipenv may install dependencies that don't work, or not
+#   install all needed dependencies.
+#Pipfile.lock
+
+# PEP 582; used by e.g. github.com/David-OConnor/pyflow
+__pypackages__/
+
+# Celery stuff
+celerybeat-schedule
+celerybeat.pid
+
+# SageMath parsed files
+*.sage.py
+
+# Environments
+.env
+.venv
+env/
+venv/
+ENV/
+env.bak/
+venv.bak/
+
+# Spyder project settings
+.spyderproject
+.spyproject
+
+# Rope project settings
+.ropeproject
+
+# mkdocs documentation
+/site
+
+# mypy
+.mypy_cache/
+.dmypy.json
+dmypy.json
+
+# Pyre type checker
+.pyre/
+
+# Docker
+.env.docker
+
+# Kafka
+kafka-logs/
+
+# PostgreSQL
+*.sql~
+
+# TensorFlow
+.saved_model/
+checkpoints/
+
+# MLflow
+mlruns/
+mlartifacts/
+
+# DVC
+.dvc/
+
+# Jupyter
+.jupyter/
+
+# Conda
+.conda/
+
+# Mypy
+.mypy_cache/
+
+# Black
+.pytest_cache/
+
+# Isort
+.isort.cfg
+
+# VSCode
+.vscode/settings.json
+.vscode/tasks.json
+.vscode/launch.json
+.vscode/extensions.json
+*.code-workspace
+
+# Sublime Text
+*.sublime-project
+*.sublime-workspace
+
+# IntelliJ IDEA
+*.iml
+*.iws
+.out/
+.idea/
+.idea_modules/
+
+# NetBeans
+nbproject/private/
+nbbuild/
+dist/
+nbdist/
+.nb-gradle/
+
+# Vim
+*.swp
+*.swo
+.vimrc
+
+# Emacs
+*~
+\#*\#
+/.emacs.desktop
+/.emacs.desktop.lock
+*.elc
+auto-save-list
+tramp
+.\#*
+
+# TeX
+*.aux
+*.log
+*.pdf
+*.toc
+*.lof
+*.lot
+*.bbl
+*.blg
+*.idx
+*.ind
+*.ilg
+*.synctex.gz
+*.fdb_latexmk
+*.fls
+*.nav
+*.snm
+*.vrb
+*.thm
+*.out
+*.fdb_latexmk
+*.fls
+
+# Node.js
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+lerna-debug.log*
+
+# Yarn
+.yarn-integrity
+.yarn-metadata.json
+.yarn-cache
+
+# npm
+.npmignore
+.npmrc
+package-lock.json
+yarn.lock
+
+# Bower
+bower_components/
+
+# Composer
+composer.phar
+/vendor/
+
+# Sass
+.sass-cache/
+*.css.map
+
+# Gradle
+.gradle/
+build/
+
+# Maven
+target/
+pom.xml.tag
+pom.xml.releaseBackup
+pom.xml.versionsBackup
+pom.xml.next
+release.properties
+dependency-reduced-pom.xml
+buildNumber.properties
+
+# Mercurial
+.hg/
+.hgignore
+.hgtags
+
+# Bazaar
+.bzr/
+.bzrignore
+
+# CVS
+CVS/
+CVSROOT/
+.cvsignore
+
+# SVN
+.svn/
+
+# TFS
+$tf/
+
+# OS generated files
+ehthumbs.db
+Icon?
+Thumbs.db
+
+# Logs
+logs/
+*.log
+
+# Temp files
+*.tmp
+*.temp
+~*
+
+# Database files
+*.db
+*.sqlite
+
+# Backup files
+*.bak
+*.backup
+*.old
+*.orig
+
+# Archive files
+*.zip
+*.rar
+*.tar
+*.tar.gz
+*.tgz
+*.7z
+
+# Media files (add more as needed)
+*.mp4
+*.mov
+*.avi
+*.mkv
+*.wmv
+*.flv
+*.webm
+*.mp3
+*.wav
+*.ogg
+*.flac
+*.aac
+*.wma
+*.m4a
+*.opus
+*.aiff
+*.alac
+*.ape
+*.dsf
+*.dff
+*.mqa
+*.tta
+*.wv
+*.m3u
+*.m3u8
+*.pls
+*.xspf
+*.asx
+*.cue
+*.iso
+*.bin
+*.img
+*.nrg
+*.mdf
+*.mds
+*.dmg
+*.toast
+*.vcd
+*.svcd
+*.dvd
+*.divx
+*.xvid
+*.rm
+*.rmvb
+*.asf
+*.3gp
+*.3g2
+*.m2ts
+*.mts
+*.m2v
+*.m4v
+*.f4v
+*.f4p
+*.f4a
+*.f4b
+
+# Large files (add more as needed)
+*.exe
+*.msi
+*.dll
+*.so
+*.dylib
+*.jar
+*.war
+*.ear
+*.class
+*.apk
+*.ipa
+*.deb
+*.rpm
+*.pkg
+*.dmg
+*.iso
+*.bin
+*.img
+*.nrg
+*.mdf
+*.mds
+*.toast
+*.vcd
+*.svcd
+*.dvd
+*.divx
+*.xvid
+*.rm
+*.rmvb
+*.asf
+*.3gp
+*.3g2
+*.m2ts
+*.mts
+*.m2v
+*.m4v
+*.f4v
+*.f4p
+*.f4a
+*.f4b
+
+# Configuration files that contain sensitive information
+config/secrets.yml
+config/database.yml
+.env
+.env.local
+.env.*.local
+
+# Local configuration files
+*.local
+*.local.*
+local.*
+config/local.*
+config/*.local.*
+
+# IDE specific files
+*.idea/
+*.vscode/
+*.sublime-workspace
+*.sublime-project
+
+# OS specific files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Editor specific files
+*.swp
+*.swo
+*~
+*.un~
+*~
+\#*\#
+/.emacs.desktop
+/.emacs.desktop.lock
+*.elc
+auto-save-list
+tramp
+.\#*
+
+# Temporary files
+tmp/
+temp/
+*.tmp
+*.temp
+~*
+
+# Log files
+*.log
+logs/
+
+# Cache files
+.cache/
+*.cache
+
+# Build artifacts
+build/
+dist/
+*.egg-info/
+*.egg
+*.whl
+*.tar.gz
+
+# Coverage reports
+htmlcov/
+.coverage
+.coverage.*
+*,cover
+
+# Test reports
+.noseids
+.coverage.xml
+nosetests.xml
+coverage.xml
+
+# Documentation
+docs/_build/
+
+# Virtual environments
+venv/
+env/
+.venv/
+.env/
+
+# IDE settings
+.vscode/
+.idea/
+*.iml
+*.iws
+*.ipr
+
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Editor backup files
+*~
+\#*\#
+/.emacs.desktop
+/.emacs.desktop.lock
+*.elc
+auto-save-list
+tramp
+.\#*
+
+# Temporary editor files
+*.swp
+*.swo
+*~
+
+# OS specific files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+Icon?
+ehthumbs.db
+Thumbs.db
